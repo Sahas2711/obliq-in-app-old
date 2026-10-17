@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: obliq
+      POSTGRES_PASSWORD: obliq
+      POSTGRES_DB: obliq
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - obliq-db:/var/lib/postgresql/data
+
+volumes:
+  obliq-db:

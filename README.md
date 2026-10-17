@@ -23,10 +23,34 @@ npm run check
 
 This runs Prettier, ESLint, TypeScript, tests, and the production build. Husky runs formatting on staged files, linting, type checking, and tests before commits.
 
-## Data and backend integration
+## Backend
 
-V1 uses sample data and browser storage. Authentication, backend endpoints, email delivery, and server validation are not implemented. Headline metrics and earnings use design fixtures. The timer remembers its project and start time across refreshes and closed tabs when browser storage is available. New projects do not change the selected project. A first session requires an explicit project selection.
+The backend is in this app: Next.js route handlers under `src/app/api` and server code under `src/server`, with Postgres and [Drizzle ORM](https://orm.drizzle.team/). It needs Docker, or any Postgres 15+ database.
 
-`WorkspaceSource` defines async `load`, `create`, and `saveTime` methods. The local implementation is in `src/lib/workspace-source.ts`; the screens access it through `useWorkspace`. Replace the exported source with an API implementation when the backend contract is available. Forms await successful saves, prevent repeat submissions while saving, and keep input when a request fails. Loading failures have a Retry action; failed time saves retain the duration for retry.
+```sh
+cp .env.example .env
+docker compose up -d      # Postgres on 127.0.0.1:5433
+npm run db:migrate        # apply drizzle/*.sql
+npm run db:seed           # demo firm for DEV_AUTH_ID, from the design fixtures
+```
 
-See [the LLD](docs/lld.md) for the file structure, adapter contract, and integration steps.
+Set `NEXT_PUBLIC_WORKSPACE_SOURCE=api` in `.env` and restart `npm run dev` to load the screens from the database. Without it the app uses browser storage as before, so it runs without a database.
+
+| Route                    | Method | Purpose                                     |
+| ------------------------ | ------ | ------------------------------------------- |
+| `/api/health`            | GET    | Server and database status                  |
+| `/api/workspace`         | GET    | The firm's clients, projects, invoices, ... |
+| `/api/workspace/records` | POST   | Create a client, project, invoice, document |
+| `/api/workspace/time`    | POST   | Save a timer session                        |
+
+There is no login yet (#10). In development, requests act as the seeded user named by `DEV_AUTH_ID`. In production the workspace routes return 401 until Auth0 is added.
+
+After changing `src/server/db/schema.ts`, run `npm run db:generate` and commit the new file in `drizzle/`. `npm run db:studio` opens a database browser.
+
+## Data
+
+Headline metrics and earnings use design fixtures. The timer remembers its project and start time across refreshes and closed tabs when browser storage is available. New projects do not change the selected project. A first session requires an explicit project selection.
+
+`WorkspaceSource` defines async `load`, `create`, and `saveTime` methods. `src/lib/workspace-source.ts` exports the browser or API implementation; the screens access it through `useWorkspace`. Forms await successful saves, prevent repeat submissions while saving, and keep input when a request fails. Loading failures have a Retry action; failed time saves retain the duration for retry. Email delivery is not implemented.
+
+See [the LLD](docs/lld.md) for the file structure, adapter contract, and backend layout.

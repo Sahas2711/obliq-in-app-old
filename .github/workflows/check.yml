@@ -13,6 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUSKY: "0"
+      DATABASE_URL: postgres://postgres:postgres@localhost:5433/obliq_test
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: obliq_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd=\"pg_isready -U postgres -d obliq_test\"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -20,4 +35,6 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run test:server
       - run: npm run check

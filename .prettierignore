@@ -4,3 +4,4 @@ dist
 package-lock.json
 next-env.d.ts
 .husky/_
+drizzle/meta/

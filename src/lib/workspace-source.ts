@@ -1,4 +1,5 @@
 import { dashboard } from "../data/dashboard.ts";
+import { createApiWorkspace } from "./api-workspace-source.ts";
 import { todayISO } from "./format.ts";
 import {
   validProjects,
@@ -179,5 +180,9 @@ export function createLocalWorkspace(
   };
 }
 
-// Storage is accessed only when a client effect or user action calls the source.
-export const workspaceSource = createLocalWorkspace(() => window.localStorage);
+// NEXT_PUBLIC_WORKSPACE_SOURCE=api uses the backend; anything else keeps the
+// browser preview. Storage is accessed only when an effect or action calls it.
+export const workspaceSource =
+  process.env.NEXT_PUBLIC_WORKSPACE_SOURCE === "api"
+    ? createApiWorkspace()
+    : createLocalWorkspace(() => window.localStorage);
